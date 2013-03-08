@@ -105,6 +105,8 @@ Control::~Control()
 	screen_destroy_pixmap(m_pixmap);
 	delete m_dispatcher;
 	delete m_tapDispatcher;
+
+	if (m_png) delete m_png;
 }
 
 void Control::fill()
@@ -142,16 +144,16 @@ bool Control::loadFromPNG(const char *filename)
 		return false;
 	}
 
-	PNGReader png(file, m_context);
-	if (!png.doRead())
+	m_png = new PNGReader(file, m_context);
+	if (!m_png || !m_png->doRead())
 		return false;
 
-	m_srcWidth = png.m_width;
-	m_srcHeight = png.m_height;
-	m_pixmap = png.m_pixmap;
-	png.m_pixmap = 0;
-	m_buffer = png.m_buffer;
-	png.m_buffer = 0;
+	m_srcWidth  = m_png->getWidth();
+	m_srcHeight = m_png->getHeight();
+	m_pixmap    = m_png->getScreenPixmap();
+//	png.m_pixmap = 0;
+	m_buffer    = m_png->getScreenBuffer();
+//	png.m_buffer = 0;
 //	int rc;
 //	{
 //		int format = SCREEN_FORMAT_RGBA8888;
@@ -179,6 +181,18 @@ void Control::showLabel(screen_window_t window)
 	std::vector<Label *>::iterator iter = m_labels.begin();
 	while (iter != m_labels.end())
 	{
+		(*iter)->hide(false);
+		(*iter)->draw(window, m_x, m_y);
+		iter++;
+	}
+}
+
+void Control::hideLabel(screen_window_t window)
+{
+	std::vector<Label *>::iterator iter = m_labels.begin();
+	while (iter != m_labels.end())
+	{
+		(*iter)->hide(true);
 		(*iter)->draw(window, m_x, m_y);
 		iter++;
 	}
@@ -223,7 +237,7 @@ void Control::draw(screen_buffer_t buffer) const
 			SCREEN_BLIT_DESTINATION_WIDTH, m_width,
 			SCREEN_BLIT_DESTINATION_HEIGHT, m_height,
 			SCREEN_BLIT_TRANSPARENCY, SCREEN_TRANSPARENCY_NONE,
-			SCREEN_BLIT_GLOBAL_ALPHA, 192,
+			SCREEN_BLIT_GLOBAL_ALPHA, 0x30,
 			SCREEN_BLIT_END
 	};
 	screen_blit(m_context, buffer, m_buffer, attribs);

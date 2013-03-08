@@ -67,6 +67,12 @@ EXTERNAL_API int tco_showlabels(tco_context_t context, screen_window_t window)
 	return ctx->showLabels(window);
 }
 
+EXTERNAL_API int tco_hidelabels(tco_context_t context, screen_window_t window)
+{
+	TCOContext *ctx = static_cast<TCOContext *>(context);
+	return ctx->hideLabels(window);
+}
+
 EXTERNAL_API int tco_touch(tco_context_t context, screen_event_t event)
 {
 	TCOContext *ctx = static_cast<TCOContext *>(context);
@@ -96,6 +102,8 @@ TCOContext::TCOContext(screen_context_t screenContext, tco_callbacks callbacks)
 	m_handleMouseButtonFunc = callbacks.handleMouseButtonFunc;
 	m_handleTapFunc = callbacks.handleTapFunc;
 	m_handleTouchScreenFunc = callbacks.handleTouchScreenFunc;
+
+	m_hidden = false;
 }
 
 int TCOContext::showConfig(screen_window_t window)
@@ -107,6 +115,12 @@ int TCOContext::showConfig(screen_window_t window)
 		if (!m_configWindow) {
 			return TCO_FAILURE;
 		}
+
+		if (m_hidden == true)
+			m_configWindow->setHidden(true);
+		else
+			m_configWindow->setHidden(false);
+
 		m_configWindow->runEventLoop(this);
 		delete m_configWindow;
 		m_configWindow = 0;
@@ -116,9 +130,9 @@ int TCOContext::showConfig(screen_window_t window)
 
 int TCOContext::loadDefaultControls()
 {
-	// Create a single 1024x600 touch screen.
+	// Create a single 1280x768 touch screen.
 	Control *control = new Control(m_screenContext,
-			Control::TOUCHSCREEN, 0, 0, 1024, 600,
+			Control::TOUCHSCREEN, 0, 0, 1280, 768,
 			new TouchScreenEventDispatcher(m_handleTouchScreenFunc), 0);
 	control->fill();
 	m_controls.push_back(control);
@@ -206,10 +220,23 @@ Control *TCOContext::controlAt(int pos[]) const
 
 int TCOContext::showLabels(screen_window_t window)
 {
+	m_hidden = false;
 	std::vector<Control *>::const_iterator iter = m_controls.begin();
 	for (; iter != m_controls.end(); iter++)
 	{
 		(*iter)->showLabel(window);
+	}
+	return TCO_SUCCESS;
+}
+
+
+int TCOContext::hideLabels(screen_window_t window)
+{
+	m_hidden = true;
+	std::vector<Control *>::const_iterator iter = m_controls.begin();
+	for (; iter != m_controls.end(); iter++)
+	{
+		(*iter)->hideLabel(window);
 	}
 	return TCO_SUCCESS;
 }

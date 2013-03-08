@@ -30,6 +30,7 @@ public:
 	void draw(PNGReader &reader);
 	void showAt(screen_window_t parent, int x, int y);
 	void move(int x, int y);
+	void setVisible(bool bVisible) { m_visible = bVisible; }
 
 protected:
 	LabelWindow(screen_context_t screenContext, int width, int height)
@@ -39,10 +40,12 @@ protected:
 		m_offset[1] = 0;
 		m_scale[0] = 1.0f;
 		m_scale[1] = 1.0f;
+		m_visible  = true;
 	}
 private:
-	int m_offset[2];
+	int   m_offset[2];
 	float m_scale[2];
+	bool  m_visible;
 };
 
 #endif /* LABELWINDOW_H_ */

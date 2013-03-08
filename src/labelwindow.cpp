@@ -44,19 +44,15 @@ void LabelWindow::draw(PNGReader &reader)
 		fprintf(stderr, "Unable to get label window buffer\n");
 		return;
 	}
-//
-//	if (reader.m_stride != stride || reader.m_height != m_size[1]) {
-//		fprintf(stderr, "Memcpy is unsafe!!!\n");
-//	}
-//	memcpy(pixels, reader.m_data, reader.m_stride * reader.m_height);
+
 	screen_buffer_t pixmapBuffer;
-	screen_get_pixmap_property_pv(reader.m_pixmap, SCREEN_PROPERTY_RENDER_BUFFERS, (void**)&pixmapBuffer);
+	screen_get_pixmap_property_pv(reader.getScreenPixmap(), SCREEN_PROPERTY_RENDER_BUFFERS, (void**)&pixmapBuffer);
 
 	int attribs[] = {
 			SCREEN_BLIT_SOURCE_X, 0,
 			SCREEN_BLIT_SOURCE_Y, 0,
-			SCREEN_BLIT_SOURCE_WIDTH, reader.m_width,
-			SCREEN_BLIT_SOURCE_HEIGHT, reader.m_height,
+			SCREEN_BLIT_SOURCE_WIDTH,  reader.getWidth(),
+			SCREEN_BLIT_SOURCE_HEIGHT, reader.getHeight(),
 			SCREEN_BLIT_DESTINATION_X, 0,
 			SCREEN_BLIT_DESTINATION_Y, 0,
 			SCREEN_BLIT_DESTINATION_WIDTH, m_size[0],
@@ -90,7 +86,7 @@ void LabelWindow::showAt(screen_window_t parent, int x, int y)
 
 	move(x, y);
 
-	int visible = 1;
+	int visible = (m_visible == true) ? 1 : 0;
 	rc = screen_set_window_property_iv(m_window, SCREEN_PROPERTY_VISIBLE, &visible);
 	if (rc) {
 		perror("set label window visible: ");

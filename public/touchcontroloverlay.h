@@ -101,6 +101,11 @@ int tco_swipedown(tco_context_t context, screen_window_t window);
 int tco_showlabels(tco_context_t context, screen_window_t window);
 
 /**
+ * Hide overlay labels
+ */
+int tco_hidelabels(tco_context_t context, screen_window_t window);
+
+/**
  * Provide touch events
  */
 int tco_touch(tco_context_t context, screen_event_t event);

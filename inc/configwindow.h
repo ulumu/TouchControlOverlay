@@ -29,17 +29,20 @@ public:
 	static ConfigWindow *createConfigWindow(screen_context_t context, screen_window_t parent=0);
 
 	void runEventLoop(TCOContext *emuContext);
+	void setHidden(bool bHidden) { m_hidden = bHidden; }
 
 protected:
 	ConfigWindow(screen_context_t screenContext, screen_window_t parent=0)
 		: EmulationWindow(screenContext, parent)
 		, m_selected(0)
+	    , m_hidden(false)
 	{}
 
 private:
 	screen_buffer_t draw(TCOContext *emuContext);
 
 	Control *m_selected;
+	bool     m_hidden;
 };
 
 #endif /* CONFIGWINDOW_H_ */

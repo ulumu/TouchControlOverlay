@@ -18,6 +18,8 @@
 
 PNGReader::PNGReader(FILE *file, screen_context_t context)
 	: m_context(context)
+	, m_pixmap(0)
+	, m_buffer(0)
 	, m_read(0)
 	, m_info(0)
 	, m_data(0)
@@ -26,8 +28,22 @@ PNGReader::PNGReader(FILE *file, screen_context_t context)
 	, m_height(0)
 	, m_stride(0)
 	, m_file(file)
+    , m_maxAlpha(0)
+{}
+
+PNGReader::PNGReader(FILE *file, screen_context_t context, unsigned char maxAlpha)
+	: m_context(context)
 	, m_pixmap(0)
 	, m_buffer(0)
+	, m_read(0)
+	, m_info(0)
+	, m_data(0)
+	, m_rows(0)
+	, m_width(0)
+	, m_height(0)
+	, m_stride(0)
+	, m_file(file)
+    , m_maxAlpha(maxAlpha)
 {}
 
 PNGReader::~PNGReader()
@@ -51,6 +67,17 @@ PNGReader::~PNGReader()
 	m_pixmap = 0;
 	m_buffer = 0;
 }
+
+#include <sys/slog.h>
+#include <sys/slogcodes.h>
+#include <errno.h>
+
+#define CHECK(x)  \
+	if (0 != x)     \
+	{             \
+		slogf(_SLOG_SETCODE(_SLOGC_TEST+8383, 0), _SLOG_ERROR , "%s:%d Failing <%s>, errno:%d", __FUNCTION__, __LINE__, #x, errno); \
+		goto error_handling; \
+	}
 
 bool PNGReader::doRead()
 {
@@ -107,24 +134,38 @@ bool PNGReader::doRead()
 	png_read_image(m_read, m_rows);
 
 	int rc;
+	int format = SCREEN_FORMAT_RGBA8888;
+	int size[2] = {m_width, m_height};
+	int usage   = SCREEN_USAGE_NATIVE | SCREEN_USAGE_READ | SCREEN_USAGE_WRITE;
+
+	CHECK(screen_create_pixmap(&m_pixmap,m_context)); // FIXME: Check failure
+	CHECK(screen_set_pixmap_property_iv(m_pixmap, SCREEN_PROPERTY_FORMAT, &format));
+	CHECK(screen_set_pixmap_property_iv(m_pixmap, SCREEN_PROPERTY_BUFFER_SIZE, size));
+	CHECK(screen_set_pixmap_property_iv(m_pixmap, SCREEN_PROPERTY_USAGE, &usage));
+	CHECK(screen_create_pixmap_buffer(m_pixmap));
+
+	unsigned char *realPixels;
+	int realStride;
+	CHECK(screen_get_pixmap_property_pv(m_pixmap, SCREEN_PROPERTY_RENDER_BUFFERS, (void**)&m_buffer));
+	CHECK(screen_get_buffer_property_pv(m_buffer, SCREEN_PROPERTY_POINTER, (void **)&realPixels));
+	CHECK(screen_get_buffer_property_iv(m_buffer, SCREEN_PROPERTY_STRIDE, &realStride));
+	for (int i=0; i<m_height; i++) {
+		memcpy(realPixels + i * realStride, m_data + i * m_stride, m_stride);
+	}
+
+	// apply alpha channel data to all pixel that has alpha value larger than the preset alpha.
+	if (m_maxAlpha > 0)
 	{
-		int format = SCREEN_FORMAT_RGBA8888;
-		int size[2] = {m_width, m_height};
-
-		rc = screen_create_pixmap(&m_pixmap, m_context); // FIXME: Check failure
-		rc = screen_set_pixmap_property_iv(m_pixmap, SCREEN_PROPERTY_FORMAT, &format);
-		rc = screen_set_pixmap_property_iv(m_pixmap, SCREEN_PROPERTY_BUFFER_SIZE, size);
-		rc = screen_create_pixmap_buffer(m_pixmap);
-
-		unsigned char *realPixels;
-		int realStride;
-		rc = screen_get_pixmap_property_pv(m_pixmap, SCREEN_PROPERTY_RENDER_BUFFERS, (void**)&m_buffer);
-		rc = screen_get_buffer_property_pv(m_buffer, SCREEN_PROPERTY_POINTER, (void **)&realPixels);
-		rc = screen_get_buffer_property_iv(m_buffer, SCREEN_PROPERTY_STRIDE, &realStride);
-
-		for (int i=0; i<m_height; i++) {
-			memcpy(realPixels + i * realStride, m_data + i * m_stride, m_stride);
+		for(int y=0; y<m_height; y++)
+		{
+			for(int x=0; x<m_width; x++)
+			{
+				if (realPixels[y * realStride + x*4+3] > m_maxAlpha) realPixels[y * realStride + x*4+3] = m_maxAlpha;
+			}
 		}
 	}
 	return true;
+
+error_handling:
+	return false;
 }

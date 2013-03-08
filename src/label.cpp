@@ -19,6 +19,8 @@
 #include "control.h"
 #include "pngreader.h"
 
+#define MAX_ALPHA 0x40
+
 Label::Label(screen_context_t context, int x, int y, unsigned width, unsigned height, char *imageFile)
 	: m_x(x)
 	, m_y(y)
@@ -34,10 +36,10 @@ Label::Label(screen_context_t context, int x, int y, unsigned width, unsigned he
 
 	if (file) {
 		// We have an image
-		PNGReader png(file, context);
-		if (png.doRead()) {
+		m_png = new PNGReader(file, context, MAX_ALPHA);
+		if (m_png && m_png->doRead()) {
 			m_window = LabelWindow::create(context, width, height);
-			m_window->draw(png);
+			m_window->draw(*m_png);
 		}
 	}
 }
@@ -45,8 +47,10 @@ Label::Label(screen_context_t context, int x, int y, unsigned width, unsigned he
 Label::~Label()
 {
 	m_control = 0;
-	delete m_window;
+	if (m_window) delete m_window;
+	if (m_png)    delete m_png;
 	m_window = 0;
+	m_png    = 0;
 }
 
 void Label::draw(screen_window_t window, int x, int y)
@@ -54,6 +58,14 @@ void Label::draw(screen_window_t window, int x, int y)
 	if (!m_window)
 		return;
 	m_window->showAt(window, m_x+x, m_y+y);
+}
+
+void Label::hide(bool bHide)
+{
+	if (!m_window)
+		return;
+
+	m_window->setVisible(!bHide);
 }
 
 void Label::move(int x, int y)

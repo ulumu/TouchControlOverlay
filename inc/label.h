@@ -21,6 +21,7 @@
 
 class Control;
 class LabelWindow;
+class PNGReader;
 
 class Label
 {
@@ -31,13 +32,15 @@ public:
 	void setControl(Control *control) { m_control = control; }
 	void draw(screen_window_t window, int x, int y);
 	void move(int x, int y);
+	void hide(bool bHide);
 private:
-	int m_x;
-	int m_y;
-	unsigned m_width;
-	unsigned m_height;
-	Control *m_control;
+	int          m_x;
+	int          m_y;
+	unsigned     m_width;
+	unsigned     m_height;
+	Control     *m_control;
 	LabelWindow *m_window;
+	PNGReader   *m_png;
 };
 
 #endif /* LABEL_H_ */

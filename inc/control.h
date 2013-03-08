@@ -22,6 +22,7 @@
 
 class EventDispatcher;
 class Label;
+class PNGReader;
 
 class Control
 {
@@ -49,36 +50,39 @@ public:
 	void move(int dx, int dy, unsigned maxDimensions[]);
 
 	void showLabel(screen_window_t window);
+	void hideLabel(screen_window_t window);
 	void addLabel(Label *label);
 
 private:
 
 	ControlType m_type;
-	int m_x;
-	int m_y;
-	unsigned m_width;
-	unsigned m_height;
-	unsigned m_srcWidth;
-	unsigned m_srcHeight;
+	int              m_x;
+	int              m_y;
+	unsigned         m_width;
+	unsigned         m_height;
+	unsigned         m_srcWidth;
+	unsigned         m_srcHeight;
 	EventDispatcher *m_dispatcher;
 	EventDispatcher *m_tapDispatcher;
 
 	screen_context_t m_context;
-	screen_pixmap_t m_pixmap;
-	screen_buffer_t m_buffer;
+	screen_pixmap_t  m_pixmap;
+	screen_buffer_t  m_buffer;
 
 	int m_contactId;
 
 	// For touch areas
-	int m_lastPos[2];
+	int       m_lastPos[2];
 	long long m_touchDownTime;
 
 	// For touch screens
-	int m_startPos[2];
+	int       m_startPos[2];
 	long long m_touchScreenStartTime;
-	bool m_touchScreenInMoveEvent;
-	bool m_touchScreenInHoldEvent;
+	bool      m_touchScreenInMoveEvent;
+	bool      m_touchScreenInHoldEvent;
 
 	std::vector<Label *> m_labels;
+
+	PNGReader *m_png;
 };
 #endif /* CONTROL_H_ */

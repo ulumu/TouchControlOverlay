@@ -41,6 +41,7 @@ public:
 	~TCOContext();
 
 	int showLabels(screen_window_t window);
+	int hideLabels(screen_window_t window);
 
 	int showConfig(screen_window_t window);
 	bool touchEvent(screen_event_t event);
@@ -62,8 +63,9 @@ public:
 	screen_context_t screenContext() const { return m_screenContext; }
 private:
 	screen_context_t m_screenContext;
-	screen_window_t m_appWindow;
-	ConfigWindow *m_configWindow;
+	screen_window_t  m_appWindow;
+	ConfigWindow    *m_configWindow;
+	bool             m_hidden;
 
 	std::vector<Control*> m_controls;
 	std::map<int, Control *> m_controlMap;

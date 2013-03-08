@@ -61,7 +61,11 @@ screen_buffer_t ConfigWindow::draw(TCOContext *emuContext)
 			}
 		}
 	}
-	emuContext->drawControls(buffer);
+
+	if (m_hidden == false)
+	{
+		emuContext->drawControls(buffer);
+	}
 	return buffer;
 }
 

@@ -24,21 +24,33 @@ class PNGReader
 {
 public:
 	PNGReader(FILE *file, screen_context_t context);
+	PNGReader(FILE *file, screen_context_t context, unsigned char minAlpha);
 	~PNGReader();
 
 	bool doRead();
 
+	screen_pixmap_t  getScreenPixmap(void) { return m_pixmap; }
+	screen_buffer_t  getScreenBuffer(void) { return m_buffer; }
+	int              getWidth(void)        { return m_width;  }
+	int              getHeight(void)       { return m_height; }
+	int              getStride(void)       { return m_stride; }
+
+private:
 	screen_context_t m_context;
-	png_structp m_read;
-	png_infop m_info;
-	unsigned char* m_data;
-	png_bytep* m_rows;
-	int m_width;
-	int m_height;
-	int m_stride;
-	FILE *m_file;
-	screen_pixmap_t m_pixmap;
-	screen_buffer_t m_buffer;
+	screen_pixmap_t  m_pixmap;
+	screen_buffer_t  m_buffer;
+
+	png_structp      m_read;
+	png_infop        m_info;
+	unsigned char   *m_data;
+	png_bytep       *m_rows;
+
+	int              m_width;
+	int              m_height;
+	int              m_stride;
+	FILE            *m_file;
+
+	unsigned char    m_maxAlpha;
 };
 
 #endif /* PNGREADER_H_ */
