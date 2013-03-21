@@ -15,6 +15,7 @@
  */
 
 #include "window.h"
+#include "logging.h"
 #include <errno.h>
 #include <string.h>
 #include <screen/screen.h>
@@ -182,28 +183,27 @@ bool EmulationWindow::getPixels(screen_buffer_t *buffer, unsigned char **pixels,
 		return false;
 
 	screen_buffer_t buffers[2];
-	int rc = screen_get_window_property_pv(m_window,
-			SCREEN_PROPERTY_RENDER_BUFFERS, (void**)buffers);
+	int rc = screen_get_window_property_pv(m_window, SCREEN_PROPERTY_RENDER_BUFFERS, (void**)buffers);
 	if (rc) {
-		fprintf(stderr, "Cannot get window render buffers: %s", strerror(errno));
+		SLOG("Cannot get window render buffers: %s", strerror(errno));
 		return false;
 	}
 	*buffer = buffers[0];
 
 	rc = screen_get_buffer_property_pv(*buffer, SCREEN_PROPERTY_POINTER, (void **)pixels);
 	if (rc) {
-		fprintf(stderr, "Cannot get buffer pointer: %s", strerror(errno));
+		SLOG("Cannot get buffer pointer: %s", strerror(errno));
 		return false;
 	}
 
 	if (!*pixels) {
-		fprintf(stderr, "Window buffer has no accessible pixels\n");
+		SLOG("Window buffer has no accessible pixels\n");
 		return false;
 	}
 
 	rc = screen_get_buffer_property_iv(*buffer, SCREEN_PROPERTY_STRIDE, stride);
 	if (rc) {
-		fprintf(stderr, "Cannot get stride: %s", strerror(errno));
+		SLOG("Cannot get stride: %s", strerror(errno));
 		return false;
 	}
 
@@ -214,7 +214,7 @@ bool EmulationWindow::setZOrder(int zOrder) const
 {
 	int rc = screen_set_window_property_iv(m_window, SCREEN_PROPERTY_ZORDER, &zOrder);
 	if (rc) {
-		fprintf(stderr, "Cannot set z-order: %s", strerror(errno));
+		SLOG("Cannot set z-order: %s", strerror(errno));
 		return false;
 	}
 	return true;
@@ -225,7 +225,7 @@ bool EmulationWindow::setTouchSensitivity(bool isSensitive) const
 	int sensitivity = (isSensitive)?SCREEN_SENSITIVITY_ALWAYS:SCREEN_SENSITIVITY_NEVER;
 	int rc = screen_set_window_property_iv(m_window, SCREEN_PROPERTY_SENSITIVITY, &sensitivity);
 	if (rc) {
-		fprintf(stderr, "Cannot set screen sensitivity: %s", strerror(errno));
+		SLOG("Cannot set screen sensitivity: %s", strerror(errno));
 		return false;
 	}
 	return true;

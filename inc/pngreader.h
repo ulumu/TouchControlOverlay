@@ -28,6 +28,7 @@ public:
 	~PNGReader();
 
 	bool doRead();
+	unsigned char adjustAlpha(unsigned char maxAlpha);
 
 	screen_pixmap_t  getScreenPixmap(void) { return m_pixmap; }
 	screen_buffer_t  getScreenBuffer(void) { return m_buffer; }

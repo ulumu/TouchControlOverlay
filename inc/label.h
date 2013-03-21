@@ -33,6 +33,7 @@ public:
 	void draw(screen_window_t window, int x, int y);
 	void move(int x, int y);
 	void hide(bool bHide);
+	void adjustAlpha(unsigned char alpha);
 private:
 	int          m_x;
 	int          m_y;
@@ -41,6 +42,7 @@ private:
 	Control     *m_control;
 	LabelWindow *m_window;
 	PNGReader   *m_png;
+	unsigned char m_alpha;
 };
 
 #endif /* LABEL_H_ */

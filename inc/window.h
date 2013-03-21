@@ -37,8 +37,8 @@ protected:
 
 	bool m_valid;
 	screen_context_t m_context;
-	screen_window_t m_window;
-	screen_window_t m_parent;
+	screen_window_t  m_window;
+	screen_window_t  m_parent;
 	int m_size[2];
 
 private:

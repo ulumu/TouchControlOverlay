@@ -17,10 +17,69 @@
 #include "configwindow.h"
 #include "touchcontroloverlay_priv.h"
 #include "control.h"
+#include "logging.h"
 #include <bps/bps.h>
 #include <bps/screen.h>
 #include <bps/event.h>
 #include <bps/navigator.h>
+#include <gestures/types.h>
+#include <gestures/long_press.h>
+#include <gestures/tap.h>
+#include <gestures/double_tap.h>
+#include <gestures/set.h>
+#include <input/screen_helpers.h>
+#include <unistd.h>
+
+static unsigned char g_alpha = 0x7F;
+
+/**
+ * The callback invoked when a gesture is recognized or updated.
+ */
+void gesture_callback(gesture_base_t* gesture, mtouch_event_t* event, void* param, int async)
+{
+    switch (gesture->type) {
+        case GESTURE_DOUBLE_TAP: {
+            gesture_tap_t* d_tap = (gesture_tap_t*)gesture;
+            SLOG("Double tap x:%d y:%d", d_tap->touch_coords.x, d_tap->touch_coords.y);
+
+            g_alpha += 0x40;
+            break;
+        }
+        case GESTURE_LONG_PRESS: {
+        	gesture_long_press_t *lpress = (gesture_long_press_t *)gesture;
+        	SLOG("Long Press x:%d y%d", lpress->coords.x, lpress->coords.y);
+
+        	break;
+        }
+        default: {
+            SLOG("Unknown Gesture");
+            break;
+        }
+    }
+    fprintf(stderr,"\n");
+}
+
+/**
+ * Initialize the gestures sets
+ */
+void ConfigWindow::init_gestures(void)
+{
+    m_gset = gestures_set_alloc();
+    if (NULL != m_gset) {
+        double_tap_gesture_alloc(NULL, gesture_callback, m_gset);
+        long_press_gesture_alloc(NULL, gesture_callback, m_gset);
+    } else {
+        SLOG("Failed to allocate gestures set\n");
+    }
+}
+
+void ConfigWindow::cleanup_gestures(void)
+{
+    if (NULL != m_gset) {
+        gestures_set_free(m_gset);
+        m_gset = NULL;
+    }
+}
 
 ConfigWindow* ConfigWindow::createConfigWindow(screen_context_t context, screen_window_t parent)
 {
@@ -45,20 +104,19 @@ screen_buffer_t ConfigWindow::draw(TCOContext *emuContext)
 	screen_buffer_t buffer;
 	unsigned char *pixels;
 	int stride;
+	int i=0,j=0;
+
 	if (!getPixels(&buffer, &pixels, &stride)) {
 		return 0;
 	}
 
-	{
-		// Fill pixels
-		int i=0,j=0;
-		for (i=0; i<m_size[1]; i++) {
-			for (j=0; j<m_size[0]; j++) {
-				pixels[i*stride+j*4] = 0xa0;
-				pixels[i*stride+j*4+1] = 0xa0;
-				pixels[i*stride+j*4+2] = 0xa0;
-				pixels[i*stride+j*4+3] = 0xa0;
-			}
+	// Fill ConfigWindow background color
+	for (i=0; i<m_size[1]; i++) {
+		for (j=0; j<m_size[0]; j++) {
+			pixels[i*stride+j*4]   = 0x30;
+			pixels[i*stride+j*4+1] = 0x30;
+			pixels[i*stride+j*4+2] = 0x30;
+			pixels[i*stride+j*4+3] = 0xa0;
 		}
 	}
 
@@ -69,15 +127,17 @@ screen_buffer_t ConfigWindow::draw(TCOContext *emuContext)
 	return buffer;
 }
 
+
 void ConfigWindow::runEventLoop(TCOContext *emuContext)
 {
-	screen_buffer_t buffer = draw(emuContext);
+	screen_buffer_t buffer;
 
 	bool showingWindow = true;
 	bps_initialize();
 	screen_request_events(m_context);
-	bps_event_t *event; // FIXME: How do we verify they ran bps_initialize?
+	bps_event_t *event = NULL; // FIXME: How do we verify they ran bps_initialize?
 	screen_event_t se;
+	mtouch_event_t mtouch_event;
 	int eventType;
 	int contactId;
 	bool touching = false;
@@ -85,6 +145,11 @@ void ConfigWindow::runEventLoop(TCOContext *emuContext)
 	int startPos[2] = {0,0};
 	int endPos[2] = {0,0};
 	bool scaling = false;
+	int  rc;
+	unsigned char *pixels;
+	int stride;
+
+	init_gestures();
 
 	while (showingWindow)
 	{
@@ -106,35 +171,55 @@ void ConfigWindow::runEventLoop(TCOContext *emuContext)
 				se = screen_event_get_event(event);
 				screen_get_event_property_iv(se, SCREEN_PROPERTY_TYPE, &eventType);
 				screen_get_event_property_iv(se, SCREEN_PROPERTY_TOUCH_ID, &contactId);
-				switch (eventType)
-				{
-				case SCREEN_EVENT_MTOUCH_TOUCH:
-					screen_get_event_property_iv(se, SCREEN_PROPERTY_TOUCH_ID, &contactId);
-					if (contactId == 0 && !touching && !releasedThisRound) {
-						touching = true;
-						screen_get_event_property_iv(se, SCREEN_PROPERTY_SOURCE_POSITION, startPos);
-						endPos[0] = startPos[0];
-						endPos[1] = startPos[1];
-					}
-					break;
-				case SCREEN_EVENT_MTOUCH_MOVE:
-					screen_get_event_property_iv(se, SCREEN_PROPERTY_TOUCH_ID, &contactId);
-					if (contactId == 0 && touching) {
-						screen_get_event_property_iv(se, SCREEN_PROPERTY_SOURCE_POSITION, endPos);
-					}
-					break;
-				case SCREEN_EVENT_MTOUCH_RELEASE:
-					screen_get_event_property_iv(se, SCREEN_PROPERTY_TOUCH_ID, &contactId);
-					if (contactId == 0 && touching) {
-						touching = false;
-						releasedThisRound = true;
-						screen_get_event_property_iv(se, SCREEN_PROPERTY_SOURCE_POSITION, endPos);
-					}
-					break;
-				default:
-					fprintf(stderr, "Unknown screen event: %d\n", eventType);
-					break;
-				}
+
+			    if( eventType == SCREEN_EVENT_MTOUCH_TOUCH ||
+			    	eventType == SCREEN_EVENT_MTOUCH_MOVE ||
+			    	eventType == SCREEN_EVENT_MTOUCH_RELEASE)
+			    {
+			        rc = screen_get_mtouch_event(se, &mtouch_event, 1);
+			        if (rc)
+			        {
+			            SLOG("Error: failed to get mtouch event\n");
+			        }
+
+			        rc = gestures_set_process_event(m_gset, &mtouch_event, NULL);
+
+			        if (!rc)
+			        {
+						switch (eventType)
+						{
+						case SCREEN_EVENT_MTOUCH_TOUCH:
+							screen_get_event_property_iv(se, SCREEN_PROPERTY_TOUCH_ID, &contactId);
+							if (contactId == 0 && !touching && !releasedThisRound) {
+								touching = true;
+								screen_get_event_property_iv(se, SCREEN_PROPERTY_SOURCE_POSITION, startPos);
+								endPos[0]   = startPos[0];
+								endPos[1]   = startPos[1];
+							}
+							break;
+						case SCREEN_EVENT_MTOUCH_MOVE:
+							screen_get_event_property_iv(se, SCREEN_PROPERTY_TOUCH_ID, &contactId);
+							if (contactId == 0 && touching) {
+								screen_get_event_property_iv(se, SCREEN_PROPERTY_SOURCE_POSITION, endPos);
+							}
+							break;
+						case SCREEN_EVENT_MTOUCH_RELEASE:
+							screen_get_event_property_iv(se, SCREEN_PROPERTY_TOUCH_ID, &contactId);
+							if (contactId == 0 && touching) {
+								touching = false;
+								releasedThisRound = true;
+								screen_get_event_property_iv(se, SCREEN_PROPERTY_SOURCE_POSITION, endPos);
+							}
+							break;
+						default:
+							break;
+						}
+			        }
+			        else
+			        {
+			        	emuContext->adjustLabelsAlpha(g_alpha);
+			        }
+			    }
 			}
 
 			bps_get_event(&event, 0);
@@ -147,13 +232,15 @@ void ConfigWindow::runEventLoop(TCOContext *emuContext)
 				m_selected = emuContext->controlAt(startPos);
 			if (m_selected && (endPos[0] != startPos[0] || endPos[1] != startPos[1])) {
 				m_selected->move(endPos[0] - startPos[0], endPos[1] - startPos[1], (unsigned*)m_size);
-				buffer = draw(emuContext);
 				startPos[0] = endPos[0];
 				startPos[1] = endPos[1];
 			}
 		}
 
+		buffer = draw(emuContext);
 		if (buffer)
 			post(buffer);
 	}
+
+	cleanup_gestures();
 }

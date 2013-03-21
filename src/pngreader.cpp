@@ -15,6 +15,8 @@
  */
 
 #include "pngreader.h"
+#include "logging.h"
+#include <errno.h>
 
 PNGReader::PNGReader(FILE *file, screen_context_t context)
 	: m_context(context)
@@ -68,14 +70,12 @@ PNGReader::~PNGReader()
 	m_buffer = 0;
 }
 
-#include <sys/slog.h>
-#include <sys/slogcodes.h>
-#include <errno.h>
+
 
 #define CHECK(x)  \
 	if (0 != x)     \
 	{             \
-		slogf(_SLOG_SETCODE(_SLOGC_TEST+8383, 0), _SLOG_ERROR , "%s:%d Failing <%s>, errno:%d", __FUNCTION__, __LINE__, #x, errno); \
+		SLOG("Failing <%s>, errno:%d", #x, errno); \
 		goto error_handling; \
 	}
 
@@ -168,4 +168,35 @@ bool PNGReader::doRead()
 
 error_handling:
 	return false;
+}
+
+
+unsigned char PNGReader::adjustAlpha(unsigned char maxAlpha)
+{
+	int            x, y;
+	unsigned char *realPixels;
+	int            realStride;
+	int            index;
+
+	screen_get_pixmap_property_pv(m_pixmap, SCREEN_PROPERTY_RENDER_BUFFERS, (void**)&m_buffer);
+	screen_get_buffer_property_pv(m_buffer, SCREEN_PROPERTY_POINTER, (void **)&realPixels);
+	screen_get_buffer_property_iv(m_buffer, SCREEN_PROPERTY_STRIDE, &realStride);
+
+	// apply alpha channel data to all pixel that has alpha value larger than the preset alpha.
+	if (maxAlpha > 0)
+	{
+		for(int y=0; y<m_height; y++)
+		{
+			for(int x=0; x<m_width; x++)
+			{
+				index = y * realStride + x*4+3;
+				if ( (realPixels[index] > 0x10) )
+					realPixels[index] = maxAlpha;
+			}
+		}
+
+		m_maxAlpha = maxAlpha;
+	}
+
+	return m_maxAlpha;
 }

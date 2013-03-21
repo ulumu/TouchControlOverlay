@@ -19,7 +19,7 @@
 #include "control.h"
 #include "pngreader.h"
 
-#define MAX_ALPHA 0x40
+#define MAX_ALPHA 0x3F
 
 Label::Label(screen_context_t context, int x, int y, unsigned width, unsigned height, char *imageFile)
 	: m_x(x)
@@ -27,6 +27,7 @@ Label::Label(screen_context_t context, int x, int y, unsigned width, unsigned he
 	, m_width(width)
 	, m_height(height)
 	, m_window(0)
+	, m_alpha(0)
 {
 	FILE *file = 0;
 
@@ -73,4 +74,13 @@ void Label::move(int x, int y)
 	if (!m_window)
 		return;
 	m_window->move(m_x+x, m_y+y);
+}
+
+void Label::adjustAlpha(unsigned char alpha)
+{
+	if (!m_window || !m_png || (alpha == m_alpha))
+		return;
+
+	m_alpha = m_png->adjustAlpha(alpha);
+	m_window->draw(*m_png);
 }

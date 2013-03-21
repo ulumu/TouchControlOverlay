@@ -198,6 +198,16 @@ void Control::hideLabel(screen_window_t window)
 	}
 }
 
+void Control::adjustAlpha(unsigned char alpha)
+{
+	std::vector<Label *>::iterator iter = m_labels.begin();
+	while (iter != m_labels.end())
+	{
+		(*iter)->adjustAlpha(alpha);
+		iter++;
+	}
+}
+
 void Control::addLabel(Label *label)
 {
 	m_labels.push_back(label);

@@ -52,6 +52,7 @@ public:
 	void showLabel(screen_window_t window);
 	void hideLabel(screen_window_t window);
 	void addLabel(Label *label);
+	void adjustAlpha(unsigned char alpha);
 
 private:
 

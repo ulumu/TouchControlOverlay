@@ -16,6 +16,7 @@
 
 #include "labelwindow.h"
 #include "pngreader.h"
+#include "logging.h"
 
 LabelWindow *LabelWindow::create(screen_context_t context, int width, int height)
 {
@@ -41,7 +42,7 @@ void LabelWindow::draw(PNGReader &reader)
 	unsigned char *pixels;
 	int stride;
 	if (!getPixels(&buffer, &pixels, &stride)) {
-		fprintf(stderr, "Unable to get label window buffer\n");
+		SLOG("Unable to get label window buffer\n");
 		return;
 	}
 
@@ -60,9 +61,10 @@ void LabelWindow::draw(PNGReader &reader)
 			SCREEN_BLIT_END
 	};
 	screen_blit(m_context, buffer, pixmapBuffer, attribs);
+	int visible = (m_visible == true) ? 1 : 0;
+	(void)screen_set_window_property_iv(m_window, SCREEN_PROPERTY_VISIBLE, &visible);
+
 	this->post(buffer);
-	int visible = 0;
-	int rc = screen_set_window_property_iv(m_window, SCREEN_PROPERTY_VISIBLE, &visible);
 }
 
 void LabelWindow::showAt(screen_window_t parent, int x, int y)

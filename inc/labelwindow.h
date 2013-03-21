@@ -40,7 +40,7 @@ protected:
 		m_offset[1] = 0;
 		m_scale[0] = 1.0f;
 		m_scale[1] = 1.0f;
-		m_visible  = true;
+		m_visible  = false;
 	}
 private:
 	int   m_offset[2];

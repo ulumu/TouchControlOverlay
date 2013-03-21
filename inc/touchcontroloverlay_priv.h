@@ -42,6 +42,7 @@ public:
 
 	int showLabels(screen_window_t window);
 	int hideLabels(screen_window_t window);
+	int adjustLabelsAlpha(unsigned char alpha);
 
 	int showConfig(screen_window_t window);
 	bool touchEvent(screen_event_t event);

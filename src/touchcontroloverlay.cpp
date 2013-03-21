@@ -17,6 +17,7 @@
 #include "touchcontroloverlay.h"
 #include "touchcontroloverlay_priv.h"
 #include "eventdispatcher.h"
+#include "logging.h"
 #include <bps/bps.h>
 #include <bps/screen.h>
 #include <bps/event.h>
@@ -110,6 +111,8 @@ int TCOContext::showConfig(screen_window_t window)
 {
 	m_appWindow = window;
 
+	SLOG("m_hidden=%s", (m_hidden == true)?"true":"false");
+
 	if (!m_configWindow) {
 		m_configWindow = ConfigWindow::createConfigWindow(m_screenContext, window);
 		if (!m_configWindow) {
@@ -122,8 +125,10 @@ int TCOContext::showConfig(screen_window_t window)
 			m_configWindow->setHidden(false);
 
 		m_configWindow->runEventLoop(this);
+
 		delete m_configWindow;
 		m_configWindow = 0;
+		m_appWindow    = 0;
 	}
 	return TCO_SUCCESS;
 }
@@ -220,6 +225,7 @@ Control *TCOContext::controlAt(int pos[]) const
 
 int TCOContext::showLabels(screen_window_t window)
 {
+	SLOG("Showing all lables");
 	m_hidden = false;
 	std::vector<Control *>::const_iterator iter = m_controls.begin();
 	for (; iter != m_controls.end(); iter++)
@@ -232,11 +238,24 @@ int TCOContext::showLabels(screen_window_t window)
 
 int TCOContext::hideLabels(screen_window_t window)
 {
+	SLOG("Hiding all labels");
 	m_hidden = true;
 	std::vector<Control *>::const_iterator iter = m_controls.begin();
 	for (; iter != m_controls.end(); iter++)
 	{
 		(*iter)->hideLabel(window);
+	}
+	return TCO_SUCCESS;
+}
+
+
+int TCOContext::adjustLabelsAlpha(unsigned char alpha)
+{
+	SLOG("adjust Alpha [%d] to all labels", alpha);
+	std::vector<Control *>::const_iterator iter = m_controls.begin();
+	for (; iter != m_controls.end(); iter++)
+	{
+		(*iter)->adjustAlpha(alpha);
 	}
 	return TCO_SUCCESS;
 }
@@ -312,8 +331,10 @@ void TCOContext::drawControls(screen_buffer_t buffer)
 TCOContext::~TCOContext()
 {
 	m_appWindow = 0;
-	delete m_configWindow;
-	m_configWindow = 0;
+	if (m_configWindow) {
+		delete m_configWindow;
+		m_configWindow = 0;
+	}
 
 	std::vector<Control *>::iterator iter = m_controls.begin();
 	while (iter != m_controls.end())

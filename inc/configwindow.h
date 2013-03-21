@@ -36,13 +36,20 @@ protected:
 		: EmulationWindow(screenContext, parent)
 		, m_selected(0)
 	    , m_hidden(false)
+	    , m_gset(NULL)
+		, m_alpha(0x3f)
 	{}
 
 private:
 	screen_buffer_t draw(TCOContext *emuContext);
+	void init_gestures(void);
+	void cleanup_gestures(void);
 
 	Control *m_selected;
 	bool     m_hidden;
+
+	struct gestures_set *m_gset;
+	unsigned char m_alpha;
 };
 
 #endif /* CONFIGWINDOW_H_ */
