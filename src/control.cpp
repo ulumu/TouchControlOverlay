@@ -81,11 +81,13 @@ Control::Control(screen_context_t context, ControlType type,
 	, m_dispatcher(dispatcher)
 	, m_tapDispatcher(tapDispatcher)
 	, m_context(context)
+    , m_pixmap(0)
 	, m_contactId(-1)
 	, m_touchDownTime(0)
 	, m_touchScreenStartTime(0)
 	, m_touchScreenInMoveEvent(false)
 	, m_touchScreenInHoldEvent(false)
+    , m_png(0)
 {
 	m_lastPos[0] = 0;
 	m_lastPos[1] = 0;
@@ -102,7 +104,9 @@ Control::~Control()
 		iter++;
 	}
 	m_labels.clear();
-	screen_destroy_pixmap(m_pixmap);
+	if (m_pixmap) {
+		screen_destroy_pixmap(m_pixmap);
+	}
 	delete m_dispatcher;
 	delete m_tapDispatcher;
 

@@ -84,6 +84,12 @@ EXTERNAL_API int tco_touch(tco_context_t context, screen_event_t event)
 		return TCO_UNHANDLED;
 }
 
+EXTERNAL_API int tco_adjustAlpha(tco_context_t context, unsigned char alpha)
+{
+	TCOContext *ctx = static_cast<TCOContext *>(context);
+	return ctx->adjustLabelsAlpha(alpha);
+}
+
 EXTERNAL_API void tco_shutdown(tco_context_t context)
 {
 	TCOContext *ctx = static_cast<TCOContext *>(context);

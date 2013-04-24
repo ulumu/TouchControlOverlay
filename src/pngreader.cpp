@@ -50,8 +50,8 @@ PNGReader::PNGReader(FILE *file, screen_context_t context, unsigned char maxAlph
 
 PNGReader::~PNGReader()
 {
-	delete [] m_rows;
-	delete [] m_data;
+	if (m_rows) delete [] m_rows;
+	if (m_data) delete [] m_data;
 
 	if (m_read)
 		png_destroy_read_struct(&m_read, m_info ? &m_info : (png_infopp) 0, (png_infopp) 0);

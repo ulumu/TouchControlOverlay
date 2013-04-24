@@ -111,6 +111,11 @@ int tco_hidelabels(tco_context_t context, screen_window_t window);
 int tco_touch(tco_context_t context, screen_event_t event);
 
 /**
+ * Adjust overlay Label alpha level
+ */
+int tco_adjustAlpha(tco_context_t context, unsigned char alpha);
+
+/**
  * Cleanup and shutdown
  */
 void tco_shutdown(tco_context_t context);
