@@ -156,7 +156,7 @@ void ConfigWindow::runEventLoop(TCOContext *emuContext)
 		const int dirtyRects[4] = {0, 0, m_size[0], m_size[1]};
 
 		releasedThisRound = false;
-		bps_get_event(&event, 0);
+		bps_get_event(&event, -1);
 		while (showingWindow && event)
 		{
 			int domain = bps_event_get_domain(event);

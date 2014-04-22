@@ -17,6 +17,7 @@
 #include "pngreader.h"
 #include "logging.h"
 #include <errno.h>
+#include <string.h>
 
 PNGReader::PNGReader(FILE *file, screen_context_t context)
 	: m_context(context)
